@@ -31,9 +31,9 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
         videoPlayerValue.position >= videoPlayerValue.duration!;
   }
 
-  void skipBack() {
+  Duration? skipBack({bool enableTimer = true}) {
     if (latestValue != null) {
-      cancelAndRestartTimer();
+      if (enableTimer) cancelAndRestartTimer();
       final beginning = const Duration().inMilliseconds;
       final skip = (latestValue!.position -
               Duration(
@@ -42,12 +42,14 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
           .inMilliseconds;
       betterPlayerController!
           .seekTo(Duration(milliseconds: max(skip, beginning)));
+      return Duration(milliseconds: max(skip, beginning));
     }
+    return null;
   }
 
-  void skipForward() {
+  Duration? skipForward({bool enableTimer = true}) {
     if (latestValue != null) {
-      cancelAndRestartTimer();
+      if (enableTimer) cancelAndRestartTimer();
       final end = latestValue!.duration!.inMilliseconds;
       final skip = (latestValue!.position +
               Duration(
@@ -55,7 +57,9 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
                       .forwardSkipTimeInMilliseconds))
           .inMilliseconds;
       betterPlayerController!.seekTo(Duration(milliseconds: min(skip, end)));
+      return Duration(milliseconds: min(skip, end));
     }
+    return null;
   }
 
   void onShowMoreClicked() {

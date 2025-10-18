@@ -59,15 +59,18 @@ class _BetterPlayerSubtitlesDrawerState
     _outerTextStyle = TextStyle(
         fontSize: _configuration!.fontSize,
         fontFamily: _configuration!.fontFamily,
+        fontStyle: _configuration!.italic ? FontStyle.italic : FontStyle.normal,
         foreground: Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = _configuration!.outlineSize
           ..color = _configuration!.outlineColor);
 
     _innerTextStyle = TextStyle(
-        fontFamily: _configuration!.fontFamily,
-        color: _configuration!.fontColor,
-        fontSize: _configuration!.fontSize);
+      fontFamily: _configuration!.fontFamily,
+      color: _configuration!.fontColor,
+      fontSize: _configuration!.fontSize,
+      fontStyle: _configuration!.italic ? FontStyle.italic : FontStyle.normal,
+    );
 
     super.initState();
   }
@@ -159,7 +162,7 @@ class _BetterPlayerSubtitlesDrawerState
 
   Widget _buildHtmlWidget(String text, TextStyle textStyle) {
     return HtmlWidget(
-      text,
+      _configuration!.uppercase ? text.toUpperCase() : text,
       textStyle: textStyle,
     );
   }

@@ -11,6 +11,7 @@ import 'package:better_player/src/video_player/video_player.dart';
 
 // Flutter imports:
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class BetterPlayerMaterialControls extends StatefulWidget {
   ///Callback used to send information if player bar is hidden or not
@@ -44,6 +45,14 @@ class _BetterPlayerMaterialControlsState
   Timer? _showAfterExpandCollapseTimer;
   bool _displayTapped = false;
   bool _wasLoading = false;
+  bool _fastForward = false;
+  bool _fastRewind = false;
+  late int _fastForwardTime =
+      betterPlayerControlsConfiguration.forwardSkipTimeInMilliseconds;
+  late int _fastRewindTime =
+      betterPlayerControlsConfiguration.backwardSkipTimeInMilliseconds;
+  Duration? _newSkipPosition;
+  Timer? _fastFwdRwdTimer;
   VideoPlayerController? _controller;
   BetterPlayerController? _betterPlayerController;
   StreamSubscription? _controlsVisibilityStreamSubscription;
@@ -75,44 +84,178 @@ class _BetterPlayerMaterialControlsState
         child: _buildErrorWidget(),
       );
     }
-    return GestureDetector(
-      onTap: () {
-        if (BetterPlayerMultipleGestureDetector.of(context) != null) {
-          BetterPlayerMultipleGestureDetector.of(context)!.onTap?.call();
-        }
-        controlsNotVisible
-            ? cancelAndRestartTimer()
-            : changePlayerControlsNotVisible(true);
+    return Shortcuts(
+      shortcuts: {
+        LogicalKeySet(LogicalKeyboardKey.arrowUp): _UpIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowDown): _DownIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowLeft): _LeftIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowRight): _RightIntent(),
+        LogicalKeySet(LogicalKeyboardKey.select): _SelectIntent(),
+        LogicalKeySet(LogicalKeyboardKey.enter): _SelectIntent(),
+        LogicalKeySet(LogicalKeyboardKey.escape): _BackIntent(),
+        LogicalKeySet(LogicalKeyboardKey.goBack): _BackIntent(),
       },
-      onDoubleTap: () {
-        if (BetterPlayerMultipleGestureDetector.of(context) != null) {
-          BetterPlayerMultipleGestureDetector.of(context)!.onDoubleTap?.call();
-        }
-        cancelAndRestartTimer();
-      },
-      onLongPress: () {
-        if (BetterPlayerMultipleGestureDetector.of(context) != null) {
-          BetterPlayerMultipleGestureDetector.of(context)!.onLongPress?.call();
-        }
-      },
-      child: AbsorbPointer(
-        absorbing: controlsNotVisible,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (_wasLoading)
-              Center(child: _buildLoadingWidget())
-            else
-              _buildHitArea(),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: _buildTopBar(),
+      child: Actions(
+        actions: {
+          _UpIntent: CallbackAction(onInvoke: (_) {
+            if (!_betterPlayerController!.isVideoInitialized()!) {
+              return KeyEventResult.ignored;
+            }
+            if (_betterPlayerController!.controlsEnabled) {
+              if (controlsNotVisible) {
+                onShowMoreClicked();
+              } else {
+                cancelAndRestartTimer();
+              }
+            } else {
+              if (controlsNotVisible) {
+                changePlayerControlsNotVisible(false);
+              } else {
+                cancelAndRestartTimer();
+              }
+            }
+            return KeyEventResult.ignored;
+          }),
+          _DownIntent: CallbackAction(onInvoke: (_) {
+            if (!_betterPlayerController!.isVideoInitialized()!) {
+              return KeyEventResult.ignored;
+            }
+            if (controlsNotVisible) {
+              changePlayerControlsNotVisible(false);
+            } else {
+              cancelAndRestartTimer();
+            }
+            return KeyEventResult.ignored;
+          }),
+          _LeftIntent: CallbackAction(onInvoke: (_) {
+            if (!_betterPlayerController!.isVideoInitialized()! ||
+                _betterPlayerController!.isLiveStream()) {
+              return KeyEventResult.ignored;
+            }
+            if (_betterPlayerController!.controlsEnabled) {
+              if (controlsNotVisible) {
+                if (_fastForward) {
+                  _fastForward = false;
+                  _fastFwdRwdTimer?.cancel();
+                }
+                if (!_fastRewind) {
+                  _fastRewind = true;
+                  _startFwdRwdTimer();
+                } else {
+                  _fastRewindTime = (_fastRewindTime +
+                      betterPlayerControlsConfiguration
+                          .backwardSkipTimeInMilliseconds);
+                  _restartFwdRwdTimer();
+                }
+                _newSkipPosition =
+                    skipBack(enableTimer: false) ?? _newSkipPosition;
+              } else {
+                cancelAndRestartTimer();
+              }
+            } else {
+              if (controlsNotVisible) {
+                changePlayerControlsNotVisible(false);
+              } else {
+                cancelAndRestartTimer();
+              }
+            }
+            return KeyEventResult.ignored;
+          }),
+          _RightIntent: CallbackAction(onInvoke: (_) {
+            if (!_betterPlayerController!.isVideoInitialized()! ||
+                _betterPlayerController!.isLiveStream()) {
+              return KeyEventResult.ignored;
+            }
+            if (_betterPlayerController!.controlsEnabled) {
+              if (controlsNotVisible) {
+                if (_fastRewind) {
+                  _fastRewind = false;
+                  _fastFwdRwdTimer?.cancel();
+                }
+                if (!_fastForward) {
+                  _fastForward = true;
+                  _startFwdRwdTimer();
+                } else {
+                  _fastForwardTime = (_fastForwardTime +
+                      betterPlayerControlsConfiguration
+                          .forwardSkipTimeInMilliseconds);
+                  _restartFwdRwdTimer();
+                }
+                _newSkipPosition =
+                    skipForward(enableTimer: false) ?? _newSkipPosition;
+              } else {
+                cancelAndRestartTimer();
+              }
+            } else {
+              if (controlsNotVisible) {
+                changePlayerControlsNotVisible(false);
+              } else {
+                cancelAndRestartTimer();
+              }
+            }
+            return KeyEventResult.ignored;
+          }),
+          _SelectIntent: CallbackAction(onInvoke: (_) {
+            if (!_betterPlayerController!.isVideoInitialized()!) {
+              return KeyEventResult.ignored;
+            }
+            if (controlsNotVisible) {
+              changePlayerControlsNotVisible(false);
+            }
+            return KeyEventResult.ignored;
+          }),
+          _BackIntent: CallbackAction(onInvoke: (_) {
+            if (!controlsNotVisible) {
+              changePlayerControlsNotVisible(true);
+            }
+            return KeyEventResult.ignored;
+          }),
+        },
+        child: GestureDetector(
+          onTap: () {
+            if (BetterPlayerMultipleGestureDetector.of(context) != null) {
+              BetterPlayerMultipleGestureDetector.of(context)!.onTap?.call();
+            }
+            controlsNotVisible
+                ? cancelAndRestartTimer()
+                : changePlayerControlsNotVisible(true);
+          },
+          onDoubleTap: () {
+            if (BetterPlayerMultipleGestureDetector.of(context) != null) {
+              BetterPlayerMultipleGestureDetector.of(context)!
+                  .onDoubleTap
+                  ?.call();
+            }
+            cancelAndRestartTimer();
+          },
+          onLongPress: () {
+            if (BetterPlayerMultipleGestureDetector.of(context) != null) {
+              BetterPlayerMultipleGestureDetector.of(context)!
+                  .onLongPress
+                  ?.call();
+            }
+          },
+          child: AbsorbPointer(
+            absorbing: controlsNotVisible,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (_wasLoading)
+                  Center(child: _buildLoadingWidget())
+                else
+                  _buildHitArea(),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildTopBar(),
+                ),
+                Positioned(
+                    bottom: 0, left: 0, right: 0, child: _buildBottomBar()),
+                _buildNextVideoWidget(),
+              ],
             ),
-            Positioned(bottom: 0, left: 0, right: 0, child: _buildBottomBar()),
-            _buildNextVideoWidget(),
-          ],
+          ),
         ),
       ),
     );
@@ -128,6 +271,7 @@ class _BetterPlayerMaterialControlsState
     _controller?.removeListener(_updateState);
     _hideTimer?.cancel();
     _initTimer?.cancel();
+    _fastFwdRwdTimer?.cancel();
     _showAfterExpandCollapseTimer?.cancel();
     _controlsVisibilityStreamSubscription?.cancel();
   }
@@ -254,7 +398,7 @@ class _BetterPlayerMaterialControlsState
         child: Icon(
           Icons.arrow_back_ios_rounded,
           color: _controlsConfiguration.iconsColor,
-          size: _betterPlayerController!.isFullScreen ? 32 : 28,
+          size: _betterPlayerController!.isFullScreen ? 26 : 20,
         ),
       ),
     );
@@ -302,7 +446,7 @@ class _BetterPlayerMaterialControlsState
         child: Icon(
           betterPlayerControlsConfiguration.pipMenuIcon,
           color: betterPlayerControlsConfiguration.iconsColor,
-          size: _betterPlayerController!.isFullScreen ? 32 : 28,
+          size: _betterPlayerController!.isFullScreen ? 26 : 20,
         ),
       ),
     );
@@ -347,7 +491,7 @@ class _BetterPlayerMaterialControlsState
         child: Icon(
           _controlsConfiguration.overflowMenuIcon,
           color: _controlsConfiguration.iconsColor,
-          size: _betterPlayerController!.isFullScreen ? 32 : 28,
+          size: _betterPlayerController!.isFullScreen ? 26 : 20,
         ),
       ),
     );
@@ -430,7 +574,7 @@ class _BetterPlayerMaterialControlsState
                     ? _controlsConfiguration.fullscreenDisableIcon
                     : _controlsConfiguration.fullscreenEnableIcon,
                 color: _controlsConfiguration.iconsColor,
-                size: _betterPlayerController!.isFullScreen ? 32 : 28,
+                size: _betterPlayerController!.isFullScreen ? 26 : 20,
               ),
             ),
           ),
@@ -444,17 +588,33 @@ class _BetterPlayerMaterialControlsState
       return const SizedBox();
     }
     return Container(
-      child: Center(
-        child: AnimatedOpacity(
-          opacity: controlsNotVisible ? 0.0 : 1.0,
-          duration: _controlsConfiguration.controlsHideTime,
-          child: _buildMiddleRow(),
-        ),
+      child: Stack(
+        alignment: AlignmentDirectional.center,
+        children: [
+          AnimatedOpacity(
+            opacity: controlsNotVisible ? 0.0 : 1.0,
+            duration: _controlsConfiguration.controlsHideTime,
+            child: _buildMiddleRow(),
+          ),
+          Visibility(
+            visible: _fastRewind && controlsNotVisible,
+            child: _buildFastRewind(),
+          ),
+          Visibility(
+            visible: _fastForward && controlsNotVisible,
+            child: _buildFastForward(),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildMiddleRow() {
+    if (_betterPlayerController!.isVideoInitialized()! &&
+        _newSkipPosition == null) {
+      _newSkipPosition =
+          _latestValue != null ? _latestValue!.position : Duration.zero;
+    }
     return Container(
       color: _controlsConfiguration.controlBarColor,
       width: double.infinity,
@@ -475,6 +635,56 @@ class _BetterPlayerMaterialControlsState
                   const SizedBox(),
               ],
             ),
+    );
+  }
+
+  Widget _buildFastRewind() {
+    return Positioned(
+      left: 0,
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 100, maxWidth: 350),
+        decoration: BoxDecoration(
+          color: Colors.black.withAlpha(65),
+          borderRadius: BorderRadius.horizontal(right: Radius.circular(80)),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.fast_rewind_rounded,
+              size: 60,
+              color: _controlsConfiguration.iconsColor,
+            ),
+            Text(
+                '-${(_fastRewindTime / 1000).toInt()}s (${BetterPlayerUtils.formatDuration(_newSkipPosition!)})',
+                style: TextStyle(fontSize: 24))
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFastForward() {
+    return Positioned(
+      right: 0,
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 100, maxWidth: 350),
+        decoration: BoxDecoration(
+          color: Colors.black.withAlpha(65),
+          borderRadius: BorderRadius.horizontal(left: Radius.circular(80)),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.fast_forward_rounded,
+              size: 60,
+              color: _controlsConfiguration.iconsColor,
+            ),
+            Text(
+                '+${(_fastForwardTime / 1000).toInt()}s (${BetterPlayerUtils.formatDuration(_newSkipPosition!)})',
+                style: TextStyle(fontSize: 24))
+          ],
+        ),
+      ),
     );
   }
 
@@ -512,7 +722,7 @@ class _BetterPlayerMaterialControlsState
         return _buildHitAreaClickableButton(
           icon: Icon(
             _controlsConfiguration.skipBackIcon,
-            size: betterPlayerController!.isFullScreen ? 40 : 34,
+            size: betterPlayerController!.isFullScreen ? 30 : 24,
             color: _controlsConfiguration.iconsColor,
           ),
           onClicked: skipBack,
@@ -529,7 +739,7 @@ class _BetterPlayerMaterialControlsState
         return _buildHitAreaClickableButton(
           icon: Icon(
             _controlsConfiguration.skipForwardIcon,
-            size: betterPlayerController!.isFullScreen ? 40 : 34,
+            size: betterPlayerController!.isFullScreen ? 30 : 24,
             color: _controlsConfiguration.iconsColor,
           ),
           onClicked: skipForward,
@@ -548,14 +758,14 @@ class _BetterPlayerMaterialControlsState
           icon: isFinished
               ? Icon(
                   Icons.replay,
-                  size: _betterPlayerController!.isFullScreen ? 60 : 52,
+                  size: _betterPlayerController!.isFullScreen ? 50 : 42,
                   color: _controlsConfiguration.iconsColor,
                 )
               : Icon(
                   controller.value.isPlaying
                       ? _controlsConfiguration.pauseIcon
                       : _controlsConfiguration.playIcon,
-                  size: _betterPlayerController!.isFullScreen ? 60 : 52,
+                  size: _betterPlayerController!.isFullScreen ? 50 : 42,
                   color: _controlsConfiguration.iconsColor,
                 ),
           onClicked: () {
@@ -642,7 +852,7 @@ class _BetterPlayerMaterialControlsState
                   ? _controlsConfiguration.muteIcon
                   : _controlsConfiguration.unMuteIcon,
               color: _controlsConfiguration.iconsColor,
-              size: _betterPlayerController!.isFullScreen ? 32 : 28,
+              size: _betterPlayerController!.isFullScreen ? 26 : 20,
             ),
           ),
         ),
@@ -663,7 +873,7 @@ class _BetterPlayerMaterialControlsState
               ? _controlsConfiguration.pauseIcon
               : _controlsConfiguration.playIcon,
           color: _controlsConfiguration.iconsColor,
-          size: _betterPlayerController!.isFullScreen ? 32 : 28,
+          size: _betterPlayerController!.isFullScreen ? 26 : 20,
         ),
       ),
     );
@@ -671,20 +881,19 @@ class _BetterPlayerMaterialControlsState
 
   Widget _buildHideUnhide(BetterPlayerController controller) {
     return BetterPlayerMaterialClickableWidget(
-      onTap: _onHideUnHide,
-      child: Container(
-        height: double.infinity,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Icon(
-          _betterPlayerController!.controlsEnabled
-              ? Icons.lock_outline_rounded
-              : Icons.lock_open_rounded,
-          size: _betterPlayerController!.isFullScreen ? 32 : 28,
-          color: betterPlayerControlsConfiguration.iconsColor,
-        ),
-      )
-    );
+        onTap: _onHideUnHide,
+        child: Container(
+          height: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Icon(
+            _betterPlayerController!.controlsEnabled
+                ? Icons.lock_outline_rounded
+                : Icons.lock_open_rounded,
+            size: _betterPlayerController!.isFullScreen ? 26 : 20,
+            color: betterPlayerControlsConfiguration.iconsColor,
+          ),
+        ));
   }
 
   Widget _buildPosition() {
@@ -706,15 +915,16 @@ class _BetterPlayerMaterialControlsState
         text: TextSpan(
             text: BetterPlayerUtils.formatDuration(position),
             style: TextStyle(
-              fontSize: _betterPlayerController!.isFullScreen ? 14.0 : 12.0,
+              fontSize: _betterPlayerController!.isFullScreen ? 13.0 : 10.0,
               color: _controlsConfiguration.textColor,
               decoration: TextDecoration.none,
             ),
             children: <TextSpan>[
               TextSpan(
-                text: ' / ${_betterPlayerController!.betterPlayerControlsConfiguration.playerTimeMode == 1 ? formattedTotalDuration : formattedRemainingDuration}',
+                text:
+                    ' / ${_betterPlayerController!.betterPlayerControlsConfiguration.playerTimeMode == 1 ? formattedTotalDuration : formattedRemainingDuration}',
                 style: TextStyle(
-                  fontSize: _betterPlayerController!.isFullScreen ? 14.0 : 12.0,
+                  fontSize: _betterPlayerController!.isFullScreen ? 13.0 : 10.0,
                   color: _controlsConfiguration.textColor,
                   decoration: TextDecoration.none,
                 ),
@@ -802,8 +1012,8 @@ class _BetterPlayerMaterialControlsState
               _onFullScreenExit(false)
             }
           : {
-              Navigator.pop(context,
-                  _controlsConfiguration.onFullScreenChange ?? () {})
+              Navigator.pop(
+                  context, _controlsConfiguration.onFullScreenChange ?? () {})
             };
     } else {
       _betterPlayerController!.isFullScreen
@@ -817,8 +1027,11 @@ class _BetterPlayerMaterialControlsState
 
   void _onHideUnHide() {
     if (_betterPlayerController!.controlsEnabled) {
+      changePlayerControlsNotVisible(false);
+      _hideTimer?.cancel();
       _betterPlayerController!.setControlsEnabled(false);
     } else {
+      cancelAndRestartTimer();
       _betterPlayerController!.setControlsEnabled(true);
     }
   }
@@ -830,6 +1043,26 @@ class _BetterPlayerMaterialControlsState
     _hideTimer = Timer(betterPlayerControlsConfiguration.controlsHideDelay, () {
       changePlayerControlsNotVisible(true);
     });
+  }
+
+  void _startFwdRwdTimer() {
+    _fastFwdRwdTimer = Timer(const Duration(seconds: 2), () {
+      if (_fastForward) {
+        _fastForward = false;
+        _fastForwardTime =
+            betterPlayerControlsConfiguration.forwardSkipTimeInMilliseconds;
+      }
+      if (_fastRewind) {
+        _fastRewind = false;
+        _fastRewindTime =
+            betterPlayerControlsConfiguration.backwardSkipTimeInMilliseconds;
+      }
+    });
+  }
+
+  void _restartFwdRwdTimer() {
+    _fastFwdRwdTimer?.cancel();
+    _startFwdRwdTimer();
   }
 
   void _updateState() {
@@ -901,3 +1134,16 @@ class _BetterPlayerMaterialControlsState
     );
   }
 }
+
+// Intent classes
+class _UpIntent extends Intent {}
+
+class _DownIntent extends Intent {}
+
+class _LeftIntent extends Intent {}
+
+class _RightIntent extends Intent {}
+
+class _SelectIntent extends Intent {}
+
+class _BackIntent extends Intent {}
