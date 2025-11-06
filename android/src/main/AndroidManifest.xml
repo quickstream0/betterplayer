@@ -1,3 +1,1 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="com.jhomlala.better_player">
-</manifest>
+<manifest package="uz.shs.better_player_plus" />

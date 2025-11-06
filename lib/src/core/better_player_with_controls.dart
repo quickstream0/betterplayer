@@ -1,36 +1,31 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
-import 'package:better_player/better_player.dart';
-import 'package:better_player/src/configuration/better_player_controller_event.dart';
-import 'package:better_player/src/controls/better_player_cupertino_controls.dart';
-import 'package:better_player/src/controls/better_player_material_controls.dart';
-import 'package:better_player/src/core/better_player_utils.dart';
-import 'package:better_player/src/subtitles/better_player_subtitles_drawer.dart';
-import 'package:better_player/src/video_player/video_player.dart';
+import 'package:better_player_plus/better_player_plus.dart';
+import 'package:better_player_plus/src/configuration/better_player_controller_event.dart';
+import 'package:better_player_plus/src/controls/better_player_cupertino_controls.dart';
+import 'package:better_player_plus/src/controls/better_player_material_controls.dart';
+import 'package:better_player_plus/src/core/better_player_utils.dart';
+import 'package:better_player_plus/src/subtitles/better_player_subtitles_drawer.dart';
+import 'package:better_player_plus/src/video_player/video_player.dart';
 import 'package:flutter/material.dart';
 
 class BetterPlayerWithControls extends StatefulWidget {
+  const BetterPlayerWithControls({super.key, this.controller});
   final BetterPlayerController? controller;
 
-  const BetterPlayerWithControls({Key? key, this.controller}) : super(key: key);
-
   @override
-  _BetterPlayerWithControlsState createState() =>
-      _BetterPlayerWithControlsState();
+  State<BetterPlayerWithControls> createState() => _BetterPlayerWithControlsState();
 }
 
 class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
   BetterPlayerSubtitlesConfiguration get subtitlesConfiguration =>
       widget.controller!.betterPlayerConfiguration.subtitlesConfiguration;
 
-  BetterPlayerControlsConfiguration get controlsConfiguration =>
-      widget.controller!.betterPlayerControlsConfiguration;
+  BetterPlayerControlsConfiguration get controlsConfiguration => widget.controller!.betterPlayerControlsConfiguration;
 
-  final StreamController<bool> playerVisibilityStreamController =
-      StreamController();
-  final StreamController<bool> playerOrientationStreamController =
-      StreamController();
+  final StreamController<bool> playerVisibilityStreamController = StreamController();
+  final StreamController<bool> playerOrientationStreamController = StreamController();
 
   bool _initialized = false;
   bool _isFull = false;
@@ -41,10 +36,8 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
   @override
   void initState() {
     playerVisibilityStreamController.add(true);
-    _controllerEventSubscription =
-        widget.controller!.controllerEventStream.listen(_onControllerChanged);
-    _videoOrientationSubscription =
-        widget.controller!.controllerEventStream.listen(_onFullScreenChanged);
+    _controllerEventSubscription = widget.controller!.controllerEventStream.listen(_onControllerChanged);
+    _videoOrientationSubscription = widget.controller!.controllerEventStream.listen(_onFullScreenChanged);
     super.initState();
   }
 
@@ -53,8 +46,7 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
     if (oldWidget.controller != widget.controller) {
       _controllerEventSubscription?.cancel();
       _videoOrientationSubscription?.cancel();
-      _videoOrientationSubscription =
-          widget.controller!.controllerEventStream.listen(_onControllerChanged);
+      _controllerEventSubscription = widget.controller!.controllerEventStream.listen(_onControllerChanged);
       _controllerEventSubscription =
           widget.controller!.controllerEventStream.listen(_onFullScreenChanged);
     }
@@ -77,7 +69,7 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
       }
     });
   }
-
+  
   void _onFullScreenChanged(BetterPlayerControllerEvent event) {
     setState(() {
       if (!_isFull) {
@@ -86,24 +78,18 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
-    final BetterPlayerController betterPlayerController =
-        BetterPlayerController.of(context);
+    final BetterPlayerController betterPlayerController = BetterPlayerController.of(context);
 
     double? aspectRatio;
     if (betterPlayerController.isFullScreen) {
-      if (betterPlayerController.betterPlayerConfiguration
-              .autoDetectFullscreenDeviceOrientation ||
-          betterPlayerController
-              .betterPlayerConfiguration.autoDetectFullscreenAspectRatio) {
-        aspectRatio =
-            betterPlayerController.videoPlayerController?.value.aspectRatio ??
-                1.0;
+      if (betterPlayerController.betterPlayerConfiguration.autoDetectFullscreenDeviceOrientation ||
+          betterPlayerController.betterPlayerConfiguration.autoDetectFullscreenAspectRatio) {
+        aspectRatio = betterPlayerController.videoPlayerController?.value.aspectRatio ?? 1.0;
       } else {
-        aspectRatio = betterPlayerController
-                .betterPlayerConfiguration.fullScreenAspectRatio ??
+        aspectRatio =
+            betterPlayerController.betterPlayerConfiguration.fullScreenAspectRatio ??
             BetterPlayerUtils.calculateAspectRatio(context);
       }
     } else {
@@ -111,14 +97,13 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
     }
 
     aspectRatio ??= 16 / 9;
+    if (aspectRatio.isNaN || aspectRatio.isInfinite || aspectRatio <= 0) {
+      aspectRatio = 16 / 9;
+    }
     final innerContainer = Container(
       width: double.infinity,
-      color: betterPlayerController
-          .betterPlayerConfiguration.controlsConfiguration.backgroundColor,
-      child: AspectRatio(
-        aspectRatio: aspectRatio,
-        child: _buildPlayerWithControls(betterPlayerController, context),
-      ),
+      color: betterPlayerController.betterPlayerConfiguration.controlsConfiguration.backgroundColor,
+      child: AspectRatio(aspectRatio: aspectRatio, child: _buildPlayerWithControls(betterPlayerController, context)),
     );
 
     if (betterPlayerController.betterPlayerConfiguration.expandToFill) {
@@ -128,13 +113,12 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
     }
   }
 
-  Container _buildPlayerWithControls(
-      BetterPlayerController betterPlayerController, BuildContext context) {
+  Container _buildPlayerWithControls(BetterPlayerController betterPlayerController, BuildContext context) {
     final configuration = betterPlayerController.betterPlayerConfiguration;
     var rotation = configuration.rotation;
 
     if (!(rotation <= 360 && rotation % 90 == 0)) {
-      BetterPlayerUtils.log("Invalid rotation provided. Using rotation = 0");
+      BetterPlayerUtils.log('Invalid rotation provided. Using rotation = 0');
       rotation = 0;
     }
     if (betterPlayerController.betterPlayerDataSource == null) {
@@ -142,8 +126,7 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
     }
     _initialized = true;
 
-    final bool placeholderOnTop =
-        betterPlayerController.betterPlayerConfiguration.placeholderOnTop;
+    final bool placeholderOnTop = betterPlayerController.betterPlayerConfiguration.placeholderOnTop;
     // ignore: avoid_unnecessary_containers
     return Container(
       child: Stack(
@@ -152,13 +135,9 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
           if (placeholderOnTop) _buildPlaceholder(betterPlayerController),
           Transform.rotate(
             angle: rotation * pi / 180,
-            child: _BetterPlayerVideoFitWidget(
-              betterPlayerController,
-              betterPlayerController.getFit(),
-            ),
+            child: _BetterPlayerVideoFitWidget(betterPlayerController, betterPlayerController.getFit()),
           ),
-          betterPlayerController.betterPlayerConfiguration.overlay ??
-              Container(),
+          betterPlayerController.betterPlayerConfiguration.overlay ?? Container(),
           BetterPlayerSubtitlesDrawer(
             betterPlayerController: betterPlayerController,
             betterPlayerSubtitlesConfiguration: subtitlesConfiguration,
@@ -172,16 +151,12 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
     );
   }
 
-  Widget _buildPlaceholder(BetterPlayerController betterPlayerController) {
-    return betterPlayerController.betterPlayerDataSource!.placeholder ??
-        betterPlayerController.betterPlayerConfiguration.placeholder ??
-        Container();
-  }
+  Widget _buildPlaceholder(BetterPlayerController betterPlayerController) =>
+      betterPlayerController.betterPlayerDataSource!.placeholder ??
+      betterPlayerController.betterPlayerConfiguration.placeholder ??
+      Container();
 
-  Widget _buildControls(
-    BuildContext context,
-    BetterPlayerController betterPlayerController,
-  ) {
+  Widget _buildControls(BuildContext context, BetterPlayerController betterPlayerController) {
     if (controlsConfiguration.showControls) {
       BetterPlayerTheme? playerTheme = controlsConfiguration.playerTheme;
       if (playerTheme == null) {
@@ -192,10 +167,8 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
         }
       }
 
-      if (controlsConfiguration.customControlsBuilder != null &&
-          playerTheme == BetterPlayerTheme.custom) {
-        return controlsConfiguration.customControlsBuilder!(
-            betterPlayerController, onControlsVisibilityChanged);
+      if (controlsConfiguration.customControlsBuilder != null && playerTheme == BetterPlayerTheme.custom) {
+        return controlsConfiguration.customControlsBuilder!(betterPlayerController, onControlsVisibilityChanged);
       } else if (playerTheme == BetterPlayerTheme.material) {
         return _buildMaterialControl();
       } else if (playerTheme == BetterPlayerTheme.cupertino) {
@@ -206,20 +179,16 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
     return const SizedBox();
   }
 
-  Widget _buildMaterialControl() {
-    return BetterPlayerMaterialControls(
-      onControlsVisibilityChanged: onControlsVisibilityChanged,
-      controlsConfiguration: controlsConfiguration,
-      onFullScreenChanged: onFullScreenChanged,
-    );
-  }
+  Widget _buildMaterialControl() => BetterPlayerMaterialControls(
+    onControlsVisibilityChanged: onControlsVisibilityChanged,
+    controlsConfiguration: controlsConfiguration,
+    onFullScreenChanged: onFullScreenChanged,
+  );
 
-  Widget _buildCupertinoControl() {
-    return BetterPlayerCupertinoControls(
-      onControlsVisibilityChanged: onControlsVisibilityChanged,
-      controlsConfiguration: controlsConfiguration,
-    );
-  }
+  Widget _buildCupertinoControl() => BetterPlayerCupertinoControls(
+    onControlsVisibilityChanged: onControlsVisibilityChanged,
+    controlsConfiguration: controlsConfiguration,
+  );
 
   void onControlsVisibilityChanged(bool state) {
     playerVisibilityStreamController.add(state);
@@ -232,24 +201,17 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
 
 ///Widget used to set the proper box fit of the video. Default fit is 'fill'.
 class _BetterPlayerVideoFitWidget extends StatefulWidget {
-  const _BetterPlayerVideoFitWidget(
-    this.betterPlayerController,
-    this.boxFit, {
-    Key? key,
-  }) : super(key: key);
+  const _BetterPlayerVideoFitWidget(this.betterPlayerController, this.boxFit);
 
   final BetterPlayerController betterPlayerController;
   final BoxFit boxFit;
 
   @override
-  _BetterPlayerVideoFitWidgetState createState() =>
-      _BetterPlayerVideoFitWidgetState();
+  _BetterPlayerVideoFitWidgetState createState() => _BetterPlayerVideoFitWidgetState();
 }
 
-class _BetterPlayerVideoFitWidgetState
-    extends State<_BetterPlayerVideoFitWidget> {
-  VideoPlayerController? get controller =>
-      widget.betterPlayerController.videoPlayerController;
+class _BetterPlayerVideoFitWidgetState extends State<_BetterPlayerVideoFitWidget> {
+  VideoPlayerController? get controller => widget.betterPlayerController.videoPlayerController;
 
   bool _initialized = false;
 
@@ -262,8 +224,7 @@ class _BetterPlayerVideoFitWidgetState
   @override
   void initState() {
     super.initState();
-    if (!widget.betterPlayerController.betterPlayerConfiguration
-        .showPlaceholderUntilPlay) {
+    if (!widget.betterPlayerController.betterPlayerConfiguration.showPlaceholderUntilPlay) {
       _started = true;
     } else {
       _started = widget.betterPlayerController.hasCurrentDataSourceStarted;
@@ -277,8 +238,7 @@ class _BetterPlayerVideoFitWidgetState
     super.didUpdateWidget(oldWidget);
     if (oldWidget.betterPlayerController.videoPlayerController != controller) {
       if (_initializedListener != null) {
-        oldWidget.betterPlayerController.videoPlayerController!
-            .removeListener(_initializedListener!);
+        oldWidget.betterPlayerController.videoPlayerController!.removeListener(_initializedListener!);
       }
       _initialized = false;
       _initialize();
@@ -302,13 +262,11 @@ class _BetterPlayerVideoFitWidgetState
       _initialized = true;
     }
 
-    _controllerEventSubscription =
-        widget.betterPlayerController.controllerEventStream.listen((event) {
+    _controllerEventSubscription = widget.betterPlayerController.controllerEventStream.listen((event) {
       if (event == BetterPlayerControllerEvent.play) {
         if (!_started) {
           setState(() {
-            _started =
-                widget.betterPlayerController.hasCurrentDataSourceStarted;
+            _started = widget.betterPlayerController.hasCurrentDataSourceStarted;
           });
         }
       }
@@ -323,16 +281,21 @@ class _BetterPlayerVideoFitWidgetState
   @override
   Widget build(BuildContext context) {
     if (_initialized && _started) {
+      // iOS platform views (UiKitView) don't play well with Clip/Transform/FittedBox.
+      // Render the platform view directly to avoid black screen.
+      if (Platform.isIOS) {
+        return SizedBox.expand(child: VideoPlayer(controller));
+      }
       return Center(
         child: ClipRect(
-          child: Container(
+          child: SizedBox(
             width: double.infinity,
             height: double.infinity,
             child: FittedBox(
               fit: widget.boxFit,
               child: SizedBox(
-                width: controller!.value.size?.width ?? 0,
-                height: controller!.value.size?.height ?? 0,
+                width: max(1, controller!.value.size?.width ?? 1.0),
+                height: max(1, controller!.value.size?.height ?? 1.0),
                 child: VideoPlayer(controller),
               ),
             ),
@@ -347,8 +310,7 @@ class _BetterPlayerVideoFitWidgetState
   @override
   void dispose() {
     if (_initializedListener != null) {
-      widget.betterPlayerController.videoPlayerController!
-          .removeListener(_initializedListener!);
+      widget.betterPlayerController.videoPlayerController!.removeListener(_initializedListener!);
     }
     _controllerEventSubscription?.cancel();
     super.dispose();

@@ -2,28 +2,15 @@
 import 'package:flutter/material.dart';
 
 class BetterPlayerMaterialClickableWidget extends StatelessWidget {
+  const BetterPlayerMaterialClickableWidget({super.key, required this.onTap, required this.child});
   final Widget child;
   final void Function() onTap;
 
-  const BetterPlayerMaterialClickableWidget({
-    Key? key,
-    required this.onTap,
-    required this.child,
-  }) : super(key: key);
-
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(60),
-      ),
-      clipBehavior: Clip.hardEdge,
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        focusColor: Colors.grey[500]?.withAlpha(200),
-        child: child,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Material(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(60)),
+    clipBehavior: Clip.hardEdge,
+    color: Colors.transparent,
+    child: InkWell(onTap: onTap, child: child),
+  );
 }

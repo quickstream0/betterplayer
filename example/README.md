@@ -1,16 +1,20 @@
-# example
+# better_player_plus example
 
-Example to showcase use cases of Better Player.
+A minimal Flutter app demonstrating `better_player_plus` usage.
 
-## Getting Started
+### Getting Started
 
-This project is a starting point for a Flutter application.
+- Ensure you have Flutter installed and set up.
+- From this `example/` directory, run:
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+flutter pub get
+flutter run
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### What this example shows
+- Basic playback with `BetterPlayer`
+- Configuration of controls and options
+- Loading local assets and network sources
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+For package details, see the root `README.md` and the API docs on `pub.dev`.
