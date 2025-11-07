@@ -974,7 +974,7 @@ class _BetterPlayerMaterialControlsState extends BetterPlayerControlsState<Bette
                   decoration: TextDecoration.none,
                 ),
               ),
-              SizedBox(width: 8),
+              SizedBox(width: 12),
             ],
             Expanded(
               child: BetterPlayerMaterialVideoProgressBar(
@@ -999,7 +999,7 @@ class _BetterPlayerMaterialControlsState extends BetterPlayerControlsState<Bette
               ),
             ),
             if (_betterPlayerController!.isFullScreen) ...[
-              SizedBox(width: 8),
+              SizedBox(width: 12),
               GestureDetector(
                 onTap: () {
                   if (_playerTimeMode == 1) {

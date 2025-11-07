@@ -11,11 +11,13 @@ class BetterPlayerSubtitlesDrawer extends StatefulWidget {
     required this.betterPlayerController,
     this.betterPlayerSubtitlesConfiguration,
     required this.playerVisibilityStream,
+    this.isFullScreen = false,
   });
   final List<BetterPlayerSubtitle> subtitles;
   final BetterPlayerController betterPlayerController;
   final BetterPlayerSubtitlesConfiguration? betterPlayerSubtitlesConfiguration;
   final Stream<bool> playerVisibilityStream;
+  final bool isFullScreen;
 
   @override
   State<BetterPlayerSubtitlesDrawer> createState() => _BetterPlayerSubtitlesDrawerState();
@@ -94,12 +96,24 @@ class _BetterPlayerSubtitlesDrawerState extends State<BetterPlayerSubtitlesDrawe
     final List<String> subtitles = subtitle?.texts ?? [];
     final List<Widget> textWidgets = subtitles.map(_buildSubtitleTextWidget).toList();
 
+    // Check if player is in PIP mode
+    final bool isInPipMode = _latestValue?.isPip ?? false;
+
+    // Calculate bottom padding
+    final double bottomPadding = isInPipMode
+        ? _configuration!.bottomPadding + 14
+        : _playerVisible && widget.isFullScreen
+        ? _configuration!.bottomPadding + 54
+        : _playerVisible && !widget.isFullScreen
+        ? _configuration!.bottomPadding + 36
+        : _configuration!.bottomPadding;
+
     return SizedBox(
       height: double.infinity,
       width: double.infinity,
       child: Padding(
         padding: EdgeInsets.only(
-          bottom: _playerVisible ? _configuration!.bottomPadding + 30 : _configuration!.bottomPadding,
+          bottom: bottomPadding,
           left: _configuration!.leftPadding,
           right: _configuration!.rightPadding,
         ),
