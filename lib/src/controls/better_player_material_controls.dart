@@ -173,6 +173,9 @@ class _BetterPlayerMaterialControlsState extends BetterPlayerControlsState<Bette
         onVolumeChanged: _onVolumeChanged,
         onBrightnessChanged: _onBrightnessChanged,
         onSeek: _onSeek,
+        onSwipeAreaTap: () {
+          changePlayerControlsNotVisible(!controlsNotVisible);
+        },
         child: mainContent,
       );
       BetterPlayerUtils.log('🎯 BetterPlayer: GestureHandler wrapped!');
@@ -286,7 +289,9 @@ class _BetterPlayerMaterialControlsState extends BetterPlayerControlsState<Bette
                           _buildPipButtonWrapperWidget(controlsNotVisible, _onPlayerHide)
                         else
                           const SizedBox(),
+                        if (_controlsConfiguration.enableCast) _buildCastButton() else const SizedBox(),
                         _buildMoreButton(),
+                        if (_controlsConfiguration.enableServer) _buildServerButton() else const SizedBox(),
                       ],
                     ),
                   ],
@@ -319,7 +324,43 @@ class _BetterPlayerMaterialControlsState extends BetterPlayerControlsState<Bette
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Icon(
-          Icons.fit_screen_rounded,
+          betterPlayerControlsConfiguration.resizeIcon,
+          color: _controlsConfiguration.iconsColor,
+          size: _betterPlayerController!.isFullScreen ? 30 : 22,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCastButton() {
+    return BetterPlayerMaterialClickableWidget(
+      onTap: () {
+        if (_controlsConfiguration.onCastTap != null) {
+          _controlsConfiguration.onCastTap!();
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Icon(
+          betterPlayerControlsConfiguration.castIcon,
+          color: _controlsConfiguration.iconsColor,
+          size: _betterPlayerController!.isFullScreen ? 30 : 22,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServerButton() {
+    return BetterPlayerMaterialClickableWidget(
+      onTap: () {
+        if (_controlsConfiguration.onServerTap != null) {
+          _controlsConfiguration.onServerTap!();
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Icon(
+          betterPlayerControlsConfiguration.serverIcon,
           color: _controlsConfiguration.iconsColor,
           size: _betterPlayerController!.isFullScreen ? 30 : 22,
         ),
@@ -609,7 +650,7 @@ class _BetterPlayerMaterialControlsState extends BetterPlayerControlsState<Bette
           return _buildHitAreaClickableButton(
             icon: Icon(
               _controlsConfiguration.skipBackIcon,
-              size: betterPlayerController!.isFullScreen ? 42 : 32,
+              size: betterPlayerController!.isFullScreen ? 46 : 34,
               color: _controlsConfiguration.iconsColor,
             ),
             onClicked: skipBack,
@@ -628,7 +669,7 @@ class _BetterPlayerMaterialControlsState extends BetterPlayerControlsState<Bette
           return _buildHitAreaClickableButton(
             icon: Icon(
               _controlsConfiguration.skipForwardIcon,
-              size: betterPlayerController!.isFullScreen ? 42 : 32,
+              size: betterPlayerController!.isFullScreen ? 46 : 34,
               color: _controlsConfiguration.iconsColor,
             ),
             onClicked: skipForward,
@@ -902,21 +943,39 @@ class _BetterPlayerMaterialControlsState extends BetterPlayerControlsState<Bette
     switch (fit) {
       case BoxFit.contain:
         _betterPlayerController!.setOverriddenFit(BoxFit.fill);
+        if (_controlsConfiguration.onResizeTap != null) {
+          _controlsConfiguration.onResizeTap!(BoxFit.fill);
+        }
         break;
       case BoxFit.fill:
         _betterPlayerController!.setOverriddenFit(BoxFit.fitHeight);
+        if (_controlsConfiguration.onResizeTap != null) {
+          _controlsConfiguration.onResizeTap!(BoxFit.fitHeight);
+        }
         break;
       case BoxFit.fitHeight:
         _betterPlayerController!.setOverriddenFit(BoxFit.fitWidth);
+        if (_controlsConfiguration.onResizeTap != null) {
+          _controlsConfiguration.onResizeTap!(BoxFit.fitWidth);
+        }
         break;
       case BoxFit.fitWidth:
         _betterPlayerController!.setOverriddenFit(BoxFit.cover);
+        if (_controlsConfiguration.onResizeTap != null) {
+          _controlsConfiguration.onResizeTap!(BoxFit.cover);
+        }
         break;
       case BoxFit.cover:
         _betterPlayerController!.setOverriddenFit(BoxFit.contain);
+        if (_controlsConfiguration.onResizeTap != null) {
+          _controlsConfiguration.onResizeTap!(BoxFit.contain);
+        }
         break;
       default:
         _betterPlayerController!.setOverriddenFit(BoxFit.contain);
+        if (_controlsConfiguration.onResizeTap != null) {
+          _controlsConfiguration.onResizeTap!(BoxFit.contain);
+        }
         break;
     }
   }

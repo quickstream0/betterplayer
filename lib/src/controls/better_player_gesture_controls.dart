@@ -60,6 +60,7 @@ class BetterPlayerGestureHandler extends StatefulWidget {
     required this.onVolumeChanged,
     required this.onBrightnessChanged,
     required this.onSeek,
+    required this.onSwipeAreaTap,
     required this.currentVolume,
     required this.currentBrightness,
     this.controlsVisible = true, // Whether controls are currently visible
@@ -70,6 +71,7 @@ class BetterPlayerGestureHandler extends StatefulWidget {
   final Function(double volume) onVolumeChanged;
   final Function(double brightness) onBrightnessChanged;
   final Function(Duration position) onSeek;
+  final Function onSwipeAreaTap;
   final double currentVolume;
   final double currentBrightness;
   final bool controlsVisible;
@@ -148,7 +150,9 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
     _feedbackTimer?.cancel();
 
     // DEBUG: Log gesture value
-    BetterPlayerUtils.log('🎯 BetterPlayer Gesture: ${isLeftSide ? "Brightness" : "Volume"} delta=$delta, initial=$_initialValue');
+    BetterPlayerUtils.log(
+      '🎯 BetterPlayer Gesture: ${isLeftSide ? "Brightness" : "Volume"} delta=$delta, initial=$_initialValue',
+    );
 
     final double sensitivity = isLeftSide ? config.brightnessSwipeSensitivity : config.volumeSwipeSensitivity;
 
@@ -275,6 +279,10 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
     });
   }
 
+  void _onSwipeAreaTap() {
+    widget.onSwipeAreaTap;
+  }
+
   @override
   Widget build(BuildContext context) {
     BetterPlayerUtils.log('🎯 BetterPlayer: Building GestureHandler widget');
@@ -292,7 +300,7 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
         widget.child,
 
         // Left side - Brightness control (only active when controls are hidden)
-        if (widget.configuration.enableBrightnessSwipe && !widget.controlsVisible)
+        if (widget.configuration.enableBrightnessSwipe)
           Positioned(
             left: 0,
             top: topSafeZone, // Don't cover top bar
@@ -300,16 +308,19 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
             width: swipeAreaWidth,
             child: GestureDetector(
               behavior: HitTestBehavior.translucent, // Let taps pass through while catching drags
-              onVerticalDragStart: (details) => _onVerticalDragStart(details, true),
-              onVerticalDragUpdate: (details) => _onVerticalDragUpdate(details, true, size.height),
-              onVerticalDragEnd: _onVerticalDragEnd,
-              onDoubleTap: _onLeftSwipeAreaDoubleTap,
+              onVerticalDragStart: !widget.controlsVisible ? (details) => _onVerticalDragStart(details, true) : null,
+              onVerticalDragUpdate: !widget.controlsVisible
+                  ? (details) => _onVerticalDragUpdate(details, true, size.height)
+                  : null,
+              onVerticalDragEnd: !widget.controlsVisible ? _onVerticalDragEnd : null,
+              onDoubleTap: !widget.controlsVisible ? _onLeftSwipeAreaDoubleTap : null,
+              onTap: _onSwipeAreaTap,
               child: Container(color: Colors.transparent),
             ),
           ),
 
         // Right side - Volume control (only active when controls are hidden)
-        if (widget.configuration.enableVolumeSwipe && !widget.controlsVisible)
+        if (widget.configuration.enableVolumeSwipe)
           Positioned(
             right: 0,
             top: topSafeZone, // Don't cover top bar
@@ -317,17 +328,20 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
             width: swipeAreaWidth,
             child: GestureDetector(
               behavior: HitTestBehavior.translucent, // Let taps pass through while catching drags
-              onVerticalDragStart: (details) => _onVerticalDragStart(details, false),
-              onVerticalDragUpdate: (details) => _onVerticalDragUpdate(details, false, size.height),
-              onVerticalDragEnd: _onVerticalDragEnd,
-              onDoubleTap: _onRightSwipeAreaDoubleTap,
+              onVerticalDragStart: !widget.controlsVisible ? (details) => _onVerticalDragStart(details, false) : null,
+              onVerticalDragUpdate: !widget.controlsVisible
+                  ? (details) => _onVerticalDragUpdate(details, false, size.height)
+                  : null,
+              onVerticalDragEnd: !widget.controlsVisible ? _onVerticalDragEnd : null,
+              onDoubleTap: !widget.controlsVisible ? _onRightSwipeAreaDoubleTap : null,
+              onTap: _onSwipeAreaTap,
               child: Container(color: Colors.transparent),
             ),
           ),
 
         // Bottom center - Seek control (only active when controls are hidden)
         // Small horizontal strip at the bottom for seek gestures
-        if (widget.configuration.enableSeekSwipe && !widget.controlsVisible)
+        if (widget.configuration.enableSeekSwipe)
           Positioned(
             left: swipeAreaWidth, // Start after left gesture zone
             right: swipeAreaWidth, // End before right gesture zone
@@ -335,9 +349,12 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
             height: 60, // Small height to not interfere with buttons
             child: GestureDetector(
               behavior: HitTestBehavior.translucent, // Let taps pass through while catching drags
-              onHorizontalDragStart: _onHorizontalDragStart,
-              onHorizontalDragUpdate: (details) => _onHorizontalDragUpdate(details, size.width),
-              onHorizontalDragEnd: _onHorizontalDragEnd,
+              onHorizontalDragStart: !widget.controlsVisible ? _onHorizontalDragStart : null,
+              onHorizontalDragUpdate: !widget.controlsVisible
+                  ? (details) => _onHorizontalDragUpdate(details, size.width)
+                  : null,
+              onHorizontalDragEnd: !widget.controlsVisible ? _onHorizontalDragEnd : null,
+              onTap: _onSwipeAreaTap,
               child: Container(color: Colors.transparent),
             ),
           ),

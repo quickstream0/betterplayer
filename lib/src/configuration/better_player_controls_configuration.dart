@@ -1,5 +1,4 @@
 import 'package:better_player_plus/better_player_plus.dart';
-import 'package:better_player_plus/src/controls/better_player_gesture_controls.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -44,11 +43,16 @@ class BetterPlayerControlsConfiguration {
     this.enableSubtitles = true,
     this.enableQualities = true,
     this.enablePip = true,
-    this.enableResize = true,
+    this.enableResize = false,
+    this.enableCast = false,
+    this.enableServer = false,
     this.enableRetry = true,
     this.overflowMenuCustomItems = const [],
     this.overflowMenuIcon = Icons.more_vert_outlined,
     this.pipMenuIcon = Icons.picture_in_picture_outlined,
+    this.resizeIcon = Icons.fit_screen_outlined,
+    this.castIcon = Icons.cast_outlined,
+    this.serverIcon = Icons.cloud_outlined,
     this.playbackSpeedIcon = Icons.shutter_speed_outlined,
     this.qualitiesIcon = Icons.hd_outlined,
     this.subtitlesIcon = Icons.closed_caption_outlined,
@@ -65,6 +69,9 @@ class BetterPlayerControlsConfiguration {
     this.subtitle,
     this.onFullScreenChange,
     this.playerTimeMode,
+    this.onResizeTap,
+    this.onCastTap,
+    this.onServerTap,
     this.enableThumbnailPreview = true,
     this.onEpisodeListTap,
     this.enableEpisodeSelection = false,
@@ -206,8 +213,14 @@ class BetterPlayerControlsConfiguration {
   ///Flag used to show/hide PiP mode
   final bool enablePip;
 
-  ///Flag used to show/hide enableResize mode
+  ///Flag used to show/hide resize/fit
   final bool enableResize;
+
+  ///Flag used to show/hide cast
+  final bool enableCast;
+
+  ///Flag used to show/hide servers
+  final bool enableServer;
 
   ///Flag used to enable/disable retry feature
   final bool enableRetry;
@@ -223,6 +236,15 @@ class BetterPlayerControlsConfiguration {
 
   ///Icon of the PiP menu
   final IconData pipMenuIcon;
+
+  ///Icon of the resize
+  final IconData resizeIcon;
+
+  ///Icon of the cast
+  final IconData castIcon;
+
+  ///Icon of the servers
+  final IconData serverIcon;
 
   ///Icon of the playback speed menu item from overflow menu
   final IconData playbackSpeedIcon;
@@ -271,6 +293,15 @@ class BetterPlayerControlsConfiguration {
 
   /// Player timer mode
   final int? playerTimeMode;
+
+  ///Callback for resize tap
+  final Function(BoxFit resizeMode)? onResizeTap;
+
+  ///Callback for cast tap
+  final Function? onCastTap;
+
+  ///Callback for server selection
+  final Function? onServerTap;
 
   ///Flag used to enable/disable thumbnail preview when seeking
   final bool enableThumbnailPreview;
