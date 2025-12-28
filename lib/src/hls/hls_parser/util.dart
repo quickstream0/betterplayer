@@ -2,9 +2,13 @@ import 'package:better_player_plus/src/hls/hls_parser/exception.dart';
 import 'package:better_player_plus/src/hls/hls_parser/mime_types.dart';
 
 class LibUtil {
+  const LibUtil._();
+
   static bool startsWith(List<int> source, List<int> checker) {
     for (int i = 0; i < checker.length; i++) {
-      if (source[i] != checker[i]) return false;
+      if (source[i] != checker[i]) {
+        return false;
+      }
     }
 
     return true;
@@ -59,10 +63,11 @@ class LibUtil {
       timezoneShift = 0;
     } else {
       timezoneShift = int.parse(match.group(12)!) * 60 + int.parse(match.group(13)!);
-      if ('-' == match.group(11)) timezoneShift *= -1;
+      if ('-' == match.group(11)) {
+        timezoneShift *= -1;
+      }
     }
 
-    //todo UTCではなくGMT?
     final DateTime dateTime = DateTime.utc(
       int.parse(match.group(1)!),
       int.parse(match.group(2)!),
@@ -71,9 +76,6 @@ class LibUtil {
       int.parse(match.group(5)!),
       int.parse(match.group(6)!),
     );
-    if (match.group(8)?.isNotEmpty ?? false) {
-      //todo ここ実装再検討
-    }
 
     int time = dateTime.millisecondsSinceEpoch;
     if (timezoneShift != 0) {
@@ -87,6 +89,8 @@ class LibUtil {
 }
 
 class Util {
+  const Util._();
+
   static const int selectionFlagDefault = 1;
   static const int selectionFlagForced = 1 << 1; // 2
   static const int selectionFlagAutoSelect = 1 << 2; // 4

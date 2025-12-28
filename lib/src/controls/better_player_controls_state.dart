@@ -31,8 +31,10 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget> extends State
 
   Duration? skipBack({bool enableTimer = true}) {
     if (latestValue != null) {
-      if (enableTimer) cancelAndRestartTimer();
-      final beginning = const Duration().inMilliseconds;
+      if (enableTimer) {
+        cancelAndRestartTimer();
+      }
+      final beginning = Duration.zero.inMilliseconds;
       final skip =
           (latestValue!.position -
                   Duration(milliseconds: betterPlayerControlsConfiguration.backwardSkipTimeInMilliseconds))
@@ -45,7 +47,9 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget> extends State
 
   Duration? skipForward({bool enableTimer = true}) {
     if (latestValue != null) {
-      if (enableTimer) cancelAndRestartTimer();
+      if (enableTimer) {
+        cancelAndRestartTimer();
+      }
       final end = latestValue!.duration!.inMilliseconds;
       final skip =
           (latestValue!.position +

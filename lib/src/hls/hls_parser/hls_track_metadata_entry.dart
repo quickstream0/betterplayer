@@ -1,8 +1,10 @@
 import 'package:better_player_plus/src/hls/hls_parser/variant_info.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 
+@immutable
 class HlsTrackMetadataEntry {
-  HlsTrackMetadataEntry({this.groupId, this.name, this.variantInfos});
+  const HlsTrackMetadataEntry({this.groupId, this.name, this.variantInfos});
 
   /// The GROUP-ID value of this track, if the track is derived from an EXT-X-MEDIA tag. Null if the
   /// track is not derived from an EXT-X-MEDIA TAG.

@@ -239,7 +239,7 @@ class HlsPlaylistParser {
           sessionKeyDrmInitData.add(drmInitData);
         }
       } else if (line.startsWith(tagStreamInf)) {
-        noClosedCaptions |= line.contains(attrClosedCaptionsNone); //todo 再検討
+        noClosedCaptions |= line.contains(attrClosedCaptionsNone);
         final int bitrate = int.parse(_parseStringAttr(source: line, pattern: regexpBandwidth)!);
         int averageBitrate = 0;
         final String? averageBandwidthString = _parseStringAttr(
@@ -351,13 +351,12 @@ class HlsPlaylistParser {
       }
     }
 
-    // TODO: Don't deduplicate variants by URL.
     final List<Variant> deduplicatedVariants = []; // ignore: always_specify_types
     final Set<Uri> urlsInDeduplicatedVariants = {}; // ignore: always_specify_types
     for (int i = 0; i < variants.length; i++) {
       final Variant variant = variants[i];
       if (urlsInDeduplicatedVariants.add(variant.url)) {
-        assert(variant.format.metadata == null);
+        assert(variant.format.metadata == null, 'Variant format metadata should be null here.');
         final HlsTrackMetadataEntry hlsMetadataEntry = HlsTrackMetadataEntry(
           variantInfos: urlToVariantInfos[variant.url],
         );
@@ -385,7 +384,9 @@ class HlsPlaylistParser {
       );
 
       Uri uri = Uri.parse(baseUri);
-      if (referenceUri != null) uri = uri.resolve(referenceUri);
+      if (referenceUri != null) {
+        uri = uri.resolve(referenceUri);
+      }
 
       final String? language = _parseStringAttr(
         source: line,
@@ -399,7 +400,7 @@ class HlsPlaylistParser {
       final HlsTrackMetadataEntry entry = HlsTrackMetadataEntry(
         groupId: groupId,
         name: name,
-        variantInfos: <VariantInfo>[],
+        variantInfos: const <VariantInfo>[],
       );
       final Metadata metadata = Metadata([entry]);
 
@@ -626,7 +627,9 @@ class HlsPlaylistParser {
       pattern: regexpCharacteristics,
       variableDefinitions: variableDefinitions,
     );
-    if (concatenatedCharacteristics?.isEmpty ?? true) return 0;
+    if (concatenatedCharacteristics?.isEmpty ?? true) {
+      return 0;
+    }
     final List<String> characteristics = concatenatedCharacteristics!.split(',');
     int roleFlags = 0;
     if (characteristics.contains('public.accessibility.describes-video')) {
@@ -659,7 +662,9 @@ class HlsPlaylistParser {
 
   static Variant? _getVariantWithAudioGroup(List<Variant> variants, String? groupId) {
     for (final variant in variants) {
-      if (variant.audioGroupId == groupId) return variant;
+      if (variant.audioGroupId == groupId) {
+        return variant;
+      }
     }
     return null;
   }
@@ -895,7 +900,9 @@ class HlsPlaylistParser {
         }
         segmentMediaSequence = segmentMediaSequence! + 1;
 
-        if (segmentByteRangeLength == null) segmentByteRangeOffset = null;
+        if (segmentByteRangeLength == null) {
+          segmentByteRangeOffset = null;
+        }
 
         if (cachedDrmInitData?.schemeData.isNotEmpty != true && currentSchemeDatas.isNotEmpty) {
           final List<SchemeData> schemeDatas = currentSchemeDatas.values.toList();

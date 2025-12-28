@@ -31,6 +31,14 @@ public class SwiftBetterPlayerPlugin: NSObject, FlutterPlugin, FlutterPlatformVi
         let instance = SwiftBetterPlayerPlugin(registrar: registrar)
         registrar.addMethodCallDelegate(instance, channel: channel)
         registrar.register(instance, withId: "com.jhomlala/better_player")
+        
+        // Setup brightness channel
+        let brightnessChannel = FlutterMethodChannel(name: "better_player_plus/brightness", binaryMessenger: registrar.messenger())
+        registrar.addMethodCallDelegate(instance, channel: brightnessChannel)
+        
+        // Setup volume channel
+        let volumeChannel = FlutterMethodChannel(name: "better_player_plus/volume", binaryMessenger: registrar.messenger())
+        registrar.addMethodCallDelegate(instance, channel: volumeChannel)
     }
 
     public func createArgsCodec() -> (FlutterMessageCodec & NSObjectProtocol) { FlutterStandardMessageCodec.sharedInstance() }
@@ -198,10 +206,58 @@ public class SwiftBetterPlayerPlugin: NSObject, FlutterPlugin, FlutterPlatformVi
         }
         timeObserverIdDict.removeAll()
     }
+
+    /// Set system volume using MPVolumeView (the only approved way on iOS)
+    private func setSystemVolume(_ volume: Float) {
+        let volumeView = MPVolumeView(frame: .zero)
+        // Find the slider in the volume view
+        for subview in volumeView.subviews {
+            if let slider = subview as? UISlider {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                    slider.value = max(0, min(1, volume))
+                }
+                break
+            }
+        }
+    }
 }
 
 extension SwiftBetterPlayerPlugin {
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        // Handle brightness channel methods
+        if call.method == "getBrightness" {
+            result(NSNumber(value: UIScreen.main.brightness))
+            return
+        }
+        if call.method == "setBrightness" {
+            guard let argsMap = call.arguments as? [String: Any],
+                  let brightness = (argsMap["brightness"] as? NSNumber)?.doubleValue else {
+                result(FlutterError(code: "INVALID_ARGUMENT", message: "Brightness value is required", details: nil))
+                return
+            }
+            UIScreen.main.brightness = CGFloat(brightness)
+            result(nil)
+            return
+        }
+        
+        // Handle volume channel methods
+        if call.method == "getVolume" {
+            let audioSession = AVAudioSession.sharedInstance()
+            result(NSNumber(value: audioSession.outputVolume))
+            return
+        }
+        if call.method == "setVolume" {
+            guard let argsMap = call.arguments as? [String: Any],
+                  let volume = (argsMap["volume"] as? NSNumber)?.floatValue else {
+                result(FlutterError(code: "INVALID_ARGUMENT", message: "Volume value is required", details: nil))
+                return
+            }
+            // Use MPVolumeView to set system volume (this is the only approved way on iOS)
+            setSystemVolume(volume)
+            result(nil)
+            return
+        }
+        
         if call.method == "init" {
             for (_, player) in players { player.dispose() }
             players.removeAll()

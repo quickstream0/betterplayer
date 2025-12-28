@@ -179,7 +179,11 @@ class BetterPlayerControlsConfiguration {
   final Duration controlsHideDelay;
 
   ///Parameter used to build custom controls
-  final Widget Function(BetterPlayerController controller, Function(bool) onPlayerVisibilityChanged)?
+  final Widget Function(
+    BetterPlayerController controller,
+    void Function(bool visibility) onPlayerVisibilityChanged,
+    BetterPlayerControlsConfiguration controlsConfiguration,
+  )?
   customControlsBuilder;
 
   ///Parameter used to change theme of the player
@@ -289,31 +293,31 @@ class BetterPlayerControlsConfiguration {
   final String? subtitle;
 
   ///Database function
-  final Function? onFullScreenChange;
+  final VoidCallback? onFullScreenChange;
 
   /// Player timer mode
   final int? playerTimeMode;
 
   ///Callback for resize tap
-  final Function(BoxFit resizeMode)? onResizeTap;
+  final void Function(BoxFit resizeMode)? onResizeTap;
 
   ///Callback for cast tap
-  final Function? onCastTap;
+  final VoidCallback? onCastTap;
 
   ///Callback for server selection
-  final Function? onServerTap;
+  final VoidCallback? onServerTap;
 
   ///Flag used to enable/disable thumbnail preview when seeking
   final bool enableThumbnailPreview;
 
   ///Callback for episode selection (for TV shows)
-  final Function()? onEpisodeListTap;
+  final VoidCallback? onEpisodeListTap;
 
   ///Enable episode selection button
   final bool enableEpisodeSelection;
 
   ///Callback for movie recommendations selection
-  final Function()? onMovieRecommendationsTap;
+  final VoidCallback? onMovieRecommendationsTap;
 
   ///Enable movie recommendations button
   final bool enableMovieRecommendations;

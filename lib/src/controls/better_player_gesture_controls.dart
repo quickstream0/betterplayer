@@ -1,6 +1,7 @@
+import 'dart:async';
+
 import 'package:better_player_plus/src/core/better_player_utils.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
 
 /// Configuration for gesture-based controls
 class BetterPlayerGestureConfiguration {
@@ -60,7 +61,7 @@ class BetterPlayerGestureHandler extends StatefulWidget {
     required this.onVolumeChanged,
     required this.onBrightnessChanged,
     required this.onSeek,
-    required this.onSwipeAreaTap,
+    required this.onTap,
     required this.currentVolume,
     required this.currentBrightness,
     this.controlsVisible = true, // Whether controls are currently visible
@@ -68,10 +69,10 @@ class BetterPlayerGestureHandler extends StatefulWidget {
 
   final Widget child;
   final BetterPlayerGestureConfiguration configuration;
-  final Function(double volume) onVolumeChanged;
-  final Function(double brightness) onBrightnessChanged;
-  final Function(Duration position) onSeek;
-  final Function onSwipeAreaTap;
+  final void Function(double volume) onVolumeChanged;
+  final void Function(double brightness) onBrightnessChanged;
+  final void Function(Duration position) onSeek;
+  final VoidCallback? onTap;
   final double currentVolume;
   final double currentBrightness;
   final bool controlsVisible;
@@ -83,9 +84,9 @@ class BetterPlayerGestureHandler extends StatefulWidget {
 class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler> {
   bool _isGestureActive = false;
   GestureFeedbackType? _currentGesture;
-  double _gestureValue = 0.0;
+  double _gestureValue = 0;
   Offset? _dragStartPosition;
-  double _initialValue = 0.0;
+  double _initialValue = 0;
   Timer? _feedbackTimer;
 
   // Track if we've moved enough to be considered a drag (not a tap)
@@ -100,8 +101,12 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
   void _onVerticalDragStart(DragStartDetails details, bool isLeftSide) {
     final config = widget.configuration;
 
-    if (isLeftSide && !config.enableBrightnessSwipe) return;
-    if (!isLeftSide && !config.enableVolumeSwipe) return;
+    if (isLeftSide && !config.enableBrightnessSwipe) {
+      return;
+    }
+    if (!isLeftSide && !config.enableVolumeSwipe) {
+      return;
+    }
 
     // DEBUG: Log gesture detection
     BetterPlayerUtils.log(
@@ -126,7 +131,9 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
   }
 
   void _onVerticalDragUpdate(DragUpdateDetails details, bool isLeftSide, double screenHeight) {
-    if (_dragStartPosition == null) return;
+    if (_dragStartPosition == null) {
+      return;
+    }
 
     final config = widget.configuration;
     // FIX: Correct direction - swipe UP should increase, swipe DOWN should decrease
@@ -144,7 +151,9 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
       setState(() {});
     }
 
-    if (!_isGestureActive) return;
+    if (!_isGestureActive) {
+      return;
+    }
 
     // Cancel any pending hide timer while actively dragging
     _feedbackTimer?.cancel();
@@ -183,7 +192,9 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
   }
 
   void _onHorizontalDragStart(DragStartDetails details) {
-    if (!widget.configuration.enableSeekSwipe) return;
+    if (!widget.configuration.enableSeekSwipe) {
+      return;
+    }
 
     BetterPlayerUtils.log('🎯 BetterPlayer Gesture: Horizontal drag started (Seek)');
 
@@ -196,7 +207,9 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
   }
 
   void _onHorizontalDragUpdate(DragUpdateDetails details, double screenWidth) {
-    if (_dragStartPosition == null) return;
+    if (_dragStartPosition == null) {
+      return;
+    }
 
     final config = widget.configuration;
     final double delta = details.localPosition.dx - _dragStartPosition!.dx;
@@ -213,7 +226,9 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
       setState(() {});
     }
 
-    if (!_isGestureActive) return;
+    if (!_isGestureActive) {
+      return;
+    }
 
     // Cancel any pending hide timer while actively dragging
     _feedbackTimer?.cancel();
@@ -230,7 +245,9 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
   void _onHorizontalDragEnd(DragEndDetails details) {
     // Only perform seek if gesture was actually activated
     if (_isGestureActive && _gestureValue != 0) {
-      final seekDuration = Duration(seconds: _gestureValue.abs().round());
+      // Preserve the sign: positive for forward, negative for backward
+      final seekSeconds = _gestureValue.round();
+      final seekDuration = Duration(seconds: seekSeconds);
       widget.onSeek(seekDuration);
     }
 
@@ -244,7 +261,9 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
   }
 
   void _onLeftSwipeAreaDoubleTap() {
-    if (!widget.configuration.enableDoubleTapSeek) return;
+    if (!widget.configuration.enableDoubleTapSeek) {
+      return;
+    }
     _isGestureActive = true;
     _gestureValue = -5;
     _currentGesture = GestureFeedbackType.seekBackward;
@@ -256,7 +275,9 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
   }
 
   void _onRightSwipeAreaDoubleTap() {
-    if (!widget.configuration.enableDoubleTapSeek) return;
+    if (!widget.configuration.enableDoubleTapSeek) {
+      return;
+    }
     _isGestureActive = true;
     _gestureValue = 5;
     _currentGesture = GestureFeedbackType.seekForward;
@@ -280,7 +301,7 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
   }
 
   void _onSwipeAreaTap() {
-    widget.onSwipeAreaTap;
+    widget.onTap?.call();
   }
 
   @override
@@ -291,8 +312,8 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
 
     // Define safe zones to avoid blocking control bars
     // Top bar is typically 50-80px, bottom bar is 80-100px
-    const double topSafeZone = 80.0;
-    const double bottomSafeZone = 90.0;
+    const double topSafeZone = 80;
+    const double bottomSafeZone = 100;
 
     return Stack(
       children: [
@@ -369,11 +390,11 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
     final onSurfaceColor = theme.colorScheme.onSurface;
-    double? positionedLeft =
+    final double? positionedLeft =
         _currentGesture == GestureFeedbackType.volume || _currentGesture == GestureFeedbackType.seekBackward
         ? 20
         : null;
-    double? positionedRight =
+    final double? positionedRight =
         _currentGesture == GestureFeedbackType.brightness || _currentGesture == GestureFeedbackType.seekForward
         ? 20
         : null;
@@ -381,8 +402,8 @@ class _BetterPlayerGestureHandlerState extends State<BetterPlayerGestureHandler>
     return Positioned(
       left: positionedLeft,
       right: positionedRight,
-      top: 60.0,
-      bottom: 60.0,
+      top: 60,
+      bottom: 60,
       child: _buildFeedbackContent(primaryColor, onSurfaceColor),
     );
   }

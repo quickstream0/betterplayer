@@ -41,7 +41,7 @@ class BetterPlayerController {
   final BetterPlayerPlaylistConfiguration? betterPlayerPlaylistConfiguration;
 
   ///List of event listeners, which listen to events.
-  final List<Function(BetterPlayerEvent)?> _eventListeners = [];
+  final List<void Function(BetterPlayerEvent)?> _eventListeners = [];
 
   ///List of files to delete once player disposes.
   final List<File> _tempFiles = [];
@@ -60,10 +60,10 @@ class BetterPlayerController {
   BetterPlayerControlsConfiguration get betterPlayerControlsConfiguration => _betterPlayerControlsConfiguration;
 
   ///Expose all active eventListeners
-  List<Function(BetterPlayerEvent)?> get eventListeners => _eventListeners.sublist(1);
+  List<void Function(BetterPlayerEvent)?> get eventListeners => _eventListeners.sublist(1);
 
   /// Defines a event listener where video player events will be send.
-  Function(BetterPlayerEvent)? get eventListener => betterPlayerConfiguration.eventListener;
+  void Function(BetterPlayerEvent)? get eventListener => betterPlayerConfiguration.eventListener;
 
   ///Flag used to store full screen mode state.
   bool _isFullScreen = false;
@@ -218,7 +218,7 @@ class BetterPlayerController {
   }
 
   ///Setup new data source in Better Player.
-  Future setupDataSource(BetterPlayerDataSource betterPlayerDataSource) async {
+  Future<void> setupDataSource(BetterPlayerDataSource betterPlayerDataSource) async {
     postEvent(
       BetterPlayerEvent(
         BetterPlayerEventType.setupDataSource,
@@ -249,9 +249,11 @@ class BetterPlayerController {
     }
 
     if (_isDataSourceAsms(betterPlayerDataSource)) {
-      _setupAsmsDataSource(betterPlayerDataSource).then((value) {
-        _setupSubtitles();
-      });
+      unawaited(
+        _setupAsmsDataSource(betterPlayerDataSource).then((value) {
+          _setupSubtitles();
+        }),
+      );
     } else {
       _setupSubtitles();
     }
@@ -282,7 +284,7 @@ class BetterPlayerController {
   ///Configure HLS / DASH data source based on provided data source and configuration.
   ///This method configures tracks, subtitles and audio tracks from given
   ///master playlist.
-  Future _setupAsmsDataSource(BetterPlayerDataSource source) async {
+  Future<void> _setupAsmsDataSource(BetterPlayerDataSource source) async {
     final String? data = await BetterPlayerAsmsUtils.getDataFromUrl(betterPlayerDataSource!.url, _getHeaders());
     if (data != null) {
       final BetterPlayerAsmsDataHolder response = await BetterPlayerAsmsUtils.parse(data, betterPlayerDataSource!.url);
@@ -350,7 +352,7 @@ class BetterPlayerController {
   ///is multiplied by 5 to increase window of duration.
   ///Segments are also cached, so same segment won't load twice. Only one
   ///pack of segments can be load at given time.
-  Future _loadAsmsSubtitlesSegments(Duration position) async {
+  Future<void> _loadAsmsSubtitlesSegments(Duration position) async {
     try {
       if (_asmsSegmentsLoading) {
         return;
@@ -413,7 +415,7 @@ class BetterPlayerController {
   }
 
   ///Internal method which invokes videoPlayerController source setup.
-  Future _setupDataSource(BetterPlayerDataSource betterPlayerDataSource) async {
+  Future<void> _setupDataSource(BetterPlayerDataSource betterPlayerDataSource) async {
     switch (betterPlayerDataSource.type) {
       case BetterPlayerDataSourceType.network:
         await videoPlayerController?.setNetworkDataSource(
@@ -496,10 +498,12 @@ class BetterPlayerController {
 
   ///Initializes video based on configuration. Invoke actions which need to be
   ///run on player start.
-  Future _initializeVideo() async {
-    setLooping(betterPlayerConfiguration.looping);
-    _videoEventStreamSubscription?.cancel();
-    _videoEventStreamSubscription = null;
+  Future<void> _initializeVideo() async {
+    unawaited(setLooping(betterPlayerConfiguration.looping));
+    if (_videoEventStreamSubscription != null) {
+      unawaited(_videoEventStreamSubscription!.cancel());
+      _videoEventStreamSubscription = null;
+    }
 
     _videoEventStreamSubscription = videoPlayerController?.videoEventStreamController.stream.listen(_handleVideoEvent);
 
@@ -525,7 +529,7 @@ class BetterPlayerController {
 
     final startAt = betterPlayerConfiguration.startAt;
     if (startAt != null) {
-      seekTo(startAt);
+      await seekTo(startAt);
     }
   }
 
@@ -547,6 +551,13 @@ class BetterPlayerController {
   void exitFullScreen() {
     _isFullScreen = false;
     _postControllerEvent(BetterPlayerControllerEvent.hideFullscreen);
+  }
+
+  /// Coming back from FullScreen.
+  void backFromFullScreen() {
+    _isFullScreen = false;
+    _postControllerEvent(BetterPlayerControllerEvent.hideFullscreen);
+    _postEvent(BetterPlayerEvent(BetterPlayerEventType.hideFullscreen));
   }
 
   ///Enables/disables full screen mode based on current fullscreen state.
@@ -698,7 +709,7 @@ class BetterPlayerController {
 
   ///Send player event to all listeners.
   void _postEvent(BetterPlayerEvent betterPlayerEvent) {
-    for (final Function(BetterPlayerEvent)? eventListener in _eventListeners) {
+    for (final void Function(BetterPlayerEvent)? eventListener in _eventListeners) {
       if (eventListener != null) {
         eventListener(betterPlayerEvent);
       }
@@ -738,7 +749,7 @@ class BetterPlayerController {
     }
 
     if (_betterPlayerSubtitlesSource?.asmsIsSegmented ?? false) {
-      _loadAsmsSubtitlesSegments(currentVideoPlayerValue.position);
+      await _loadAsmsSubtitlesSegments(currentVideoPlayerValue.position);
     }
 
     final int now = DateTime.now().millisecondsSinceEpoch;
@@ -757,13 +768,13 @@ class BetterPlayerController {
   }
 
   ///Add event listener which listens to player events.
-  void addEventsListener(Function(BetterPlayerEvent) eventListener) {
+  void addEventsListener(void Function(BetterPlayerEvent) eventListener) {
     _eventListeners.add(eventListener);
   }
 
   ///Remove event listener. This method should be called once you're disposing
   ///Better Player.
-  void removeEventsListener(Function(BetterPlayerEvent) eventListener) {
+  void removeEventsListener(void Function(BetterPlayerEvent) eventListener) {
     _eventListeners.remove(eventListener);
   }
 
@@ -877,10 +888,10 @@ class BetterPlayerController {
       } else {
         if (visibilityFraction == 0) {
           _wasPlayingBeforePause ??= isPlaying();
-          pause();
+          await pause();
         } else {
           if ((_wasPlayingBeforePause ?? false) && !isPlaying()!) {
-            play();
+            await play();
           }
         }
       }
@@ -894,11 +905,11 @@ class BetterPlayerController {
     }
     final position = await videoPlayerController!.position;
     final wasPlayingBeforeChange = isPlaying()!;
-    pause();
+    await pause();
     await setupDataSource(betterPlayerDataSource!.copyWith(url: url));
-    seekTo(position!);
+    await seekTo(position!);
     if (wasPlayingBeforeChange) {
-      play();
+      await play();
     }
     _postEvent(BetterPlayerEvent(BetterPlayerEventType.changedResolution, parameters: <String, dynamic>{'url': url}));
   }
@@ -1087,8 +1098,6 @@ class BetterPlayerController {
       case VideoEventType.bufferingEnd:
         _postEvent(BetterPlayerEvent(BetterPlayerEventType.bufferingEnd));
       default:
-
-        ///TODO: Handle when needed
         break;
     }
   }
@@ -1100,7 +1109,7 @@ class BetterPlayerController {
   }
 
   ///Retry data source if playback failed.
-  Future retryDataSource() async {
+  Future<void> retryDataSource() async {
     await _setupDataSource(_betterPlayerDataSource!);
     if (_videoPlayerValueOnError != null) {
       final position = _videoPlayerValueOnError!.position;

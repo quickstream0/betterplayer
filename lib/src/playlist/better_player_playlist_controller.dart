@@ -27,7 +27,7 @@ class BetterPlayerPlaylistController {
   int _currentDataSourceIndex = 0;
 
   ///Next video change listener subscription
-  StreamSubscription? _nextVideoTimeStreamSubscription;
+  StreamSubscription<int?>? _nextVideoTimeStreamSubscription;
 
   ///Flag that determines whenever player is changing video
   bool _changingToNextVideo = false;
@@ -58,8 +58,9 @@ class BetterPlayerPlaylistController {
   /// source list. Previous data source list will be removed.
   void setupDataSourceList(List<BetterPlayerDataSource> dataSourceList) {
     _betterPlayerController?.pause();
-    _betterPlayerDataSourceList.clear();
-    _betterPlayerDataSourceList.addAll(dataSourceList);
+    _betterPlayerDataSourceList
+      ..clear()
+      ..addAll(dataSourceList);
     _setup();
   }
 

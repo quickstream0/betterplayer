@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 
 /// Manager for handling screen brightness changes
 class BetterPlayerBrightnessManager {
+  const BetterPlayerBrightnessManager._();
+
   static const MethodChannel _channel = MethodChannel('better_player_plus/brightness');
 
   static double? _originalBrightness;

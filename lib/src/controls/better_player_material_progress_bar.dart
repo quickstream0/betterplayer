@@ -23,10 +23,10 @@ class BetterPlayerMaterialVideoProgressBar extends StatefulWidget {
   final BetterPlayerController? betterPlayerController;
   final BetterPlayerProgressColors colors;
   final bool isFullScreen;
-  final Function()? onDragStart;
-  final Function()? onDragEnd;
-  final Function()? onDragUpdate;
-  final Function()? onTapDown;
+  final void Function()? onDragStart;
+  final void Function()? onDragEnd;
+  final void Function()? onDragUpdate;
+  final void Function()? onTapDown;
 
   @override
   State<BetterPlayerMaterialVideoProgressBar> createState() => _VideoProgressBarState();
@@ -82,7 +82,7 @@ class _VideoProgressBarState extends State<BetterPlayerMaterialVideoProgressBar>
         }
 
         if (widget.onDragStart != null) {
-          widget.onDragStart!();
+          widget.onDragStart!.call();
         }
       },
       onHorizontalDragUpdate: (DragUpdateDetails details) {
@@ -93,7 +93,7 @@ class _VideoProgressBarState extends State<BetterPlayerMaterialVideoProgressBar>
         seekToRelativePosition(details.globalPosition);
 
         if (widget.onDragUpdate != null) {
-          widget.onDragUpdate!();
+          widget.onDragUpdate!.call();
         }
       },
       onHorizontalDragEnd: (DragEndDetails details) {
@@ -108,7 +108,7 @@ class _VideoProgressBarState extends State<BetterPlayerMaterialVideoProgressBar>
         _setupUpdateBlockTimer();
 
         if (widget.onDragEnd != null) {
-          widget.onDragEnd!();
+          widget.onDragEnd!.call();
         }
       },
       onTapDown: (TapDownDetails details) {
@@ -118,7 +118,7 @@ class _VideoProgressBarState extends State<BetterPlayerMaterialVideoProgressBar>
         seekToRelativePosition(details.globalPosition);
         _setupUpdateBlockTimer();
         if (widget.onTapDown != null) {
-          widget.onTapDown!();
+          widget.onTapDown!.call();
         }
       },
       child: Center(
@@ -192,7 +192,7 @@ class _ProgressBarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    double height = isFullScreen ? 3.0 : 2.0;
+    final double height = isFullScreen ? 3.0 : 2.0;
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(

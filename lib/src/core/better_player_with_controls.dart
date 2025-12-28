@@ -30,8 +30,8 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
   bool _initialized = false;
   bool _isFull = false;
 
-  StreamSubscription? _controllerEventSubscription;
-  StreamSubscription? _videoOrientationSubscription;
+  StreamSubscription<BetterPlayerControllerEvent>? _controllerEventSubscription;
+  StreamSubscription<BetterPlayerControllerEvent>? _videoOrientationSubscription;
 
   @override
   void initState() {
@@ -47,8 +47,7 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
       _controllerEventSubscription?.cancel();
       _videoOrientationSubscription?.cancel();
       _controllerEventSubscription = widget.controller!.controllerEventStream.listen(_onControllerChanged);
-      _controllerEventSubscription =
-          widget.controller!.controllerEventStream.listen(_onFullScreenChanged);
+      _controllerEventSubscription = widget.controller!.controllerEventStream.listen(_onFullScreenChanged);
     }
     super.didUpdateWidget(oldWidget);
   }
@@ -69,7 +68,7 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
       }
     });
   }
-  
+
   void _onFullScreenChanged(BetterPlayerControllerEvent event) {
     setState(() {
       if (!_isFull) {
@@ -169,7 +168,11 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
       }
 
       if (controlsConfiguration.customControlsBuilder != null && playerTheme == BetterPlayerTheme.custom) {
-        return controlsConfiguration.customControlsBuilder!(betterPlayerController, onControlsVisibilityChanged);
+        return controlsConfiguration.customControlsBuilder!(
+          betterPlayerController,
+          onControlsVisibilityChanged,
+          controlsConfiguration,
+        );
       } else if (playerTheme == BetterPlayerTheme.material) {
         return _buildMaterialControl();
       } else if (playerTheme == BetterPlayerTheme.cupertino) {
@@ -220,7 +223,7 @@ class _BetterPlayerVideoFitWidgetState extends State<_BetterPlayerVideoFitWidget
 
   bool _started = false;
 
-  StreamSubscription? _controllerEventSubscription;
+  StreamSubscription<BetterPlayerControllerEvent>? _controllerEventSubscription;
 
   @override
   void initState() {
@@ -289,9 +292,7 @@ class _BetterPlayerVideoFitWidgetState extends State<_BetterPlayerVideoFitWidget
       }
       return Center(
         child: ClipRect(
-          child: SizedBox(
-            width: double.infinity,
-            height: double.infinity,
+          child: SizedBox.expand(
             child: FittedBox(
               fit: widget.boxFit,
               child: SizedBox(

@@ -23,7 +23,7 @@ class VideoPlayerValue {
   VideoPlayerValue({
     required this.duration,
     this.size,
-    this.position = const Duration(),
+    this.position = Duration.zero,
     this.absolutePosition,
     this.buffered = const <DurationRange>[],
     this.isPlaying = false,
@@ -137,20 +137,18 @@ class VideoPlayerValue {
   );
 
   @override
-  String toString() {
-    // ignore: no_runtimetype_tostring
-    return '$runtimeType('
-        'duration: $duration, '
-        'size: $size, '
-        'position: $position, '
-        'absolutePosition: $absolutePosition, '
-        'buffered: [${buffered.join(', ')}], '
-        'isPlaying: $isPlaying, '
-        'isLooping: $isLooping, '
-        'isBuffering: $isBuffering, '
-        'volume: $volume, '
-        'errorDescription: $errorDescription)';
-  }
+  String toString() =>
+      'VideoPlayerValue('
+      'duration: $duration, '
+      'size: $size, '
+      'position: $position, '
+      'absolutePosition: $absolutePosition, '
+      'buffered: [${buffered.join(', ')}], '
+      'isPlaying: $isPlaying, '
+      'isLooping: $isLooping, '
+      'isBuffering: $isBuffering, '
+      'volume: $volume, '
+      'errorDescription: $errorDescription)';
 }
 
 /// Controls a platform video player, and provides updates when the state is
@@ -373,7 +371,9 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
     value = VideoPlayerValue(duration: null, isLooping: value.isLooping, volume: value.volume);
 
-    if (!_creatingCompleter.isCompleted) await _creatingCompleter.future;
+    if (!_creatingCompleter.isCompleted) {
+      await _creatingCompleter.future;
+    }
 
     _initializingCompleter = Completer<void>();
 
@@ -390,7 +390,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       _timer?.cancel();
       await _eventSubscription?.cancel();
       await _videoPlayerPlatform.dispose(_textureId);
-      videoEventStreamController.close();
+      await videoEventStreamController.close();
     }
     _isDisposed = true;
     super.dispose();
@@ -508,8 +508,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     Duration? positionToSeek = position;
     if (position! > value.duration!) {
       positionToSeek = value.duration;
-    } else if (position < const Duration()) {
-      positionToSeek = const Duration();
+    } else if (position < Duration.zero) {
+      positionToSeek = Duration.zero;
     }
     _seekPosition = positionToSeek;
 
@@ -517,9 +517,9 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     _updatePosition(position);
 
     if (isPlaying) {
-      play();
+      await play();
     } else {
-      pause();
+      await pause();
     }
   }
 
@@ -589,12 +589,13 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     _videoPlayerPlatform.setMixWithOthers(_textureId, mixWithOthers);
   }
 
-  static Future clearCache() async => _videoPlayerPlatform.clearCache();
+  static Future<void> clearCache() async => _videoPlayerPlatform.clearCache();
 
-  static Future preCache(DataSource dataSource, int preCacheSize) async =>
+  static Future<void> preCache(DataSource dataSource, int preCacheSize) async =>
       _videoPlayerPlatform.preCache(dataSource, preCacheSize);
 
-  static Future stopPreCache(String url, String? cacheKey) async => _videoPlayerPlatform.stopPreCache(url, cacheKey);
+  static Future<void> stopPreCache(String url, String? cacheKey) async =>
+      _videoPlayerPlatform.stopPreCache(url, cacheKey);
 }
 
 /// Widget that displays the video controlled by [controller].

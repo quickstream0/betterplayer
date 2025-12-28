@@ -85,7 +85,11 @@ class _ChangePlayerThemePageState extends State<ChangePlayerThemePage> {
                       BetterPlayerConfiguration(
                         controlsConfiguration: BetterPlayerControlsConfiguration(
                           playerTheme: _playerTheme,
-                          customControlsBuilder: (controller, onControlsVisibilityChanged) => CustomControlsWidget(
+                          customControlsBuilder: (
+                            controller,
+                            onControlsVisibilityChanged,
+                            controlsConfiguration,
+                          ) => CustomControlsWidget(
                             controller: controller,
                             onControlsVisibilityChanged: onControlsVisibilityChanged,
                           ),

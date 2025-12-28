@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_dynamic_calls
+
 import 'dart:convert';
 
 import 'dart:typed_data';
@@ -10,7 +12,7 @@ class BetterPlayerClearKeyUtils {
 
   ///The ClearKey from a Map. The key in map should be the kid with the associated value being the key. Both values should be provide in HEX format.
   static String generateKey(Map<String, String> keys, {String type = 'temporary'}) {
-    final Map keyMap = <String, dynamic>{'type': type};
+    final Map<String, dynamic> keyMap = <String, dynamic>{'type': type};
     keyMap['keys'] = <Map<String, String>>[];
     keys.forEach((key, value) => keyMap['keys'].add({'kty': 'oct', 'kid': _base64(key), 'k': _base64(value)}));
 

@@ -80,11 +80,11 @@ class _BetterPlayerListVideoPlayerState extends State<BetterPlayerListVideoPlaye
     final bool? initialized = _betterPlayerController!.isVideoInitialized();
     if (visibleFraction >= widget.playFraction) {
       if (widget.autoPlay && initialized! && !isPlaying! && !_isDisposing) {
-        _betterPlayerController!.play();
+        await _betterPlayerController!.play();
       }
     } else {
       if (widget.autoPause && initialized! && isPlaying! && !_isDisposing) {
-        _betterPlayerController!.pause();
+        await _betterPlayerController!.pause();
       }
     }
   }

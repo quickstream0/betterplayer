@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_annotating_with_dynamic
+
 import 'dart:async';
 
 import 'package:better_player_plus/src/configuration/better_player_buffering_configuration.dart';
@@ -24,7 +26,7 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
     if (bufferingConfiguration == null) {
       response = await _channel.invokeMapMethod<String, dynamic>('create');
     } else {
-      final responseLinkedHashMap = await _channel.invokeMethod<Map?>('create', <String, dynamic>{
+      final responseLinkedHashMap = await _channel.invokeMethod<Map<Object?, dynamic>?>('create', <String, dynamic>{
         'minBufferMs': bufferingConfiguration.minBufferMs,
         'maxBufferMs': bufferingConfiguration.maxBufferMs,
         'bufferForPlaybackMs': bufferingConfiguration.bufferForPlaybackMs,
@@ -143,7 +145,9 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
     final int milliseconds =
         await _channel.invokeMethod<int>('absolutePosition', <String, dynamic>{'textureId': textureId}) ?? 0;
 
-    if (milliseconds <= 0) return null;
+    if (milliseconds <= 0) {
+      return null;
+    }
 
     return DateTime.fromMillisecondsSinceEpoch(milliseconds);
   }

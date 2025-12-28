@@ -194,11 +194,10 @@ internal class BetterPlayer(
         }
         val mediaSource = buildMediaSource(uri, dataSourceFactory, formatHint, cacheKey, context)
         if (overriddenDuration != 0L) {
-            val clippingMediaSource = ClippingMediaSource(
-                mediaSource,
-                0,
-                overriddenDuration * 1000
-            )
+            val clippingMediaSource = ClippingMediaSource.Builder(mediaSource)
+                .setStartPositionMs(0)
+                .setEndPositionMs(overriddenDuration * 1000)
+                .build()
             exoPlayer?.setMediaSource(clippingMediaSource)
         } else {
             exoPlayer?.setMediaSource(mediaSource)
@@ -400,9 +399,8 @@ internal class BetterPlayer(
             mediaItemBuilder.setCustomCacheKey(cacheKey)
         }
         val mediaItem = mediaItemBuilder.build()
-        var drmSessionManagerProvider: DrmSessionManagerProvider? = null
-        drmSessionManager?.let { drmSessionManager ->
-            drmSessionManagerProvider = DrmSessionManagerProvider { drmSessionManager }
+        val drmSessionManagerProvider: DrmSessionManagerProvider? = drmSessionManager?.let { drmSessionManager ->
+            DrmSessionManagerProvider { drmSessionManager }
         }
 
         return when (type) {
@@ -535,7 +533,7 @@ internal class BetterPlayer(
     fun pause() {
         exoPlayer?.playWhenReady = false
     }
-    
+
     fun isPlaying(): Boolean {
         return exoPlayer?.isPlaying ?: false
     }
@@ -580,12 +578,12 @@ internal class BetterPlayer(
 
     val absolutePosition: Long
         get() {
-            val timeline = exoPlayer?.currentTimeline
-            timeline?.let {
+            exoPlayer?.let { player ->
+                val timeline = player.currentTimeline
                 if (!timeline.isEmpty) {
                     val windowStartTimeMs =
                         timeline.getWindow(0, Timeline.Window()).windowStartTimeMs
-                    val pos = exoPlayer.currentPosition
+                    val pos = player.currentPosition
                     return windowStartTimeMs + pos
                 }
             }
@@ -598,18 +596,19 @@ internal class BetterPlayer(
             event["event"] = "initialized"
             event["key"] = key
             event["duration"] = getDuration()
-            if (exoPlayer?.videoFormat != null) {
-                val videoFormat = exoPlayer.videoFormat
-                var width = videoFormat?.width
-                var height = videoFormat?.height
-                val rotationDegrees = videoFormat?.rotationDegrees
-                // Switch the width/height if video was taken in portrait mode
-                if (rotationDegrees == 90 || rotationDegrees == 270) {
-                    width = exoPlayer.videoFormat?.height
-                    height = exoPlayer.videoFormat?.width
+            exoPlayer?.let { player ->
+                player.videoFormat?.let { videoFormat ->
+                    var width = videoFormat.width
+                    var height = videoFormat.height
+                    val rotationDegrees = videoFormat.rotationDegrees
+                    // Switch the width/height if video was taken in portrait mode
+                    if (rotationDegrees == 90 || rotationDegrees == 270) {
+                        width = videoFormat.height
+                        height = videoFormat.width
+                    }
+                    event["width"] = width
+                    event["height"] = height
                 }
-                event["width"] = width
-                event["height"] = height
             }
             eventSink.success(event)
         }

@@ -1,8 +1,10 @@
 import 'package:better_player_plus/src/hls/hls_parser/hls_track_metadata_entry.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 
+@immutable
 class Metadata {
-  Metadata(this.list);
+  const Metadata(this.list);
 
   final List<HlsTrackMetadataEntry> list;
 

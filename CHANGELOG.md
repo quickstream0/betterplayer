@@ -1,3 +1,26 @@
+## 1.1.5
+
+* Fixed error in WebVTT file parser for subtitle handling
+* Fixed issue where 'hideFullscreen' event was not fired when exiting fullscreen mode
+* Improved subtitle parsing reliability and error handling
+
+## 1.1.4
+
+* Added custom controls configuration feature for enhanced player customization
+* Fixed Android Kotlin build errors and compatibility issues
+* Fixed player reference usage when accessing DRM, timeline, and video format
+* Improved DrmSessionManagerProvider initialization with safe let expressions
+* Enhanced video format access with proper null safety guards
+* Minor code improvements and optimizations
+
+## 1.1.3
+
+* Documentation improvements with enhanced README formatting and structure
+* Added LinkedIn contact information for Flutter-related inquiries
+* Code cleanup: Removed unnecessary TODO comments
+* Improved text readability and formatting throughout documentation
+* Minor version bump with maintenance updates
+
 ## 1.1.2
 
 * Fixed missing type annotation in method_channel_video_player.dart

@@ -215,7 +215,7 @@ class DataSource {
     this.activityName,
     this.clearKey,
     this.videoExtension,
-  }) : assert(uri == null || asset == null);
+  }) : assert(uri == null || asset == null, 'You can provide uri or asset but not both.');
 
   /// The maximum cache size to keep on disk in bytes.
   static const int _maxCacheSize = 100 * 1024 * 1024;
@@ -358,6 +358,7 @@ enum VideoFormat {
 }
 
 /// Event emitted from the platform implementation.
+@immutable
 class VideoEvent {
   /// Creates an instance of [VideoEvent].
   ///
@@ -365,7 +366,14 @@ class VideoEvent {
   ///
   /// Depending on the [eventType], the [duration], [size] and [buffered]
   /// arguments can be null.
-  VideoEvent({required this.eventType, required this.key, this.duration, this.size, this.buffered, this.position});
+  const VideoEvent({
+    required this.eventType,
+    required this.key,
+    this.duration,
+    this.size,
+    this.buffered,
+    this.position,
+  });
 
   /// The type of the event.
   final VideoEventType eventType;
@@ -449,10 +457,11 @@ enum VideoEventType {
 
 /// Describes a discrete segment of time within a video using a [start] and
 /// [end] [Duration].
+@immutable
 class DurationRange {
   /// Trusts that the given [start] and [end] are actually in order. They should
   /// both be non-null.
-  DurationRange(this.start, this.end);
+  const DurationRange(this.start, this.end);
 
   /// The beginning of the segment described relative to the beginning of the
   /// entire video. Should be shorter than or equal to [end].
@@ -488,8 +497,7 @@ class DurationRange {
   double endFraction(Duration duration) => end.inMilliseconds / duration.inMilliseconds;
 
   @override
-  // ignore: no_runtimetype_tostring
-  String toString() => '$runtimeType(start: $start, end: $end)';
+  String toString() => 'DurationRange(start: $start, end: $end)';
 
   @override
   bool operator ==(Object other) =>

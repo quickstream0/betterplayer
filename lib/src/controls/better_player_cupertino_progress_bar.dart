@@ -1,4 +1,4 @@
-// ignore_for_file: cascade_invocations
+// ignore_for_file: cascade_invocations, discarded_futures
 
 import 'dart:async';
 import 'package:better_player_plus/src/controls/better_player_progress_colors.dart';
@@ -78,17 +78,17 @@ class _VideoProgressBarState extends State<BetterPlayerCupertinoVideoProgressBar
         }
 
         if (widget.onDragStart != null) {
-          widget.onDragStart!();
+          widget.onDragStart!.call();
         }
       },
-      onHorizontalDragUpdate: (DragUpdateDetails details) {
+      onHorizontalDragUpdate: (DragUpdateDetails details) async {
         if (!controller!.value.initialized || !enableProgressBarDrag) {
           return;
         }
-        seekToRelativePosition(details.globalPosition);
+        await seekToRelativePosition(details.globalPosition);
 
         if (widget.onDragUpdate != null) {
-          widget.onDragUpdate!();
+          widget.onDragUpdate!.call();
         }
       },
       onHorizontalDragEnd: (DragEndDetails details) {
@@ -102,7 +102,7 @@ class _VideoProgressBarState extends State<BetterPlayerCupertinoVideoProgressBar
         _setupUpdateBlockTimer();
 
         if (widget.onDragEnd != null) {
-          widget.onDragEnd!();
+          widget.onDragEnd!.call();
         }
       },
       onTapDown: (TapDownDetails details) {
@@ -110,10 +110,10 @@ class _VideoProgressBarState extends State<BetterPlayerCupertinoVideoProgressBar
           return;
         }
 
-        seekToRelativePosition(details.globalPosition);
+        unawaited(seekToRelativePosition(details.globalPosition));
         _setupUpdateBlockTimer();
         if (widget.onTapDown != null) {
-          widget.onTapDown!();
+          widget.onTapDown!.call();
         }
       },
       child: Center(

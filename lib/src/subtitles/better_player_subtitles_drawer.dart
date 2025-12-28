@@ -35,7 +35,7 @@ class _BetterPlayerSubtitlesDrawerState extends State<BetterPlayerSubtitlesDrawe
   bool _playerVisible = false;
 
   ///Stream used to detect if play controls are visible or not
-  late StreamSubscription _visibilityStreamSubscription;
+  late StreamSubscription<bool> _visibilityStreamSubscription;
 
   @override
   void initState() {
@@ -108,9 +108,7 @@ class _BetterPlayerSubtitlesDrawerState extends State<BetterPlayerSubtitlesDrawe
         ? _configuration!.bottomPadding + 36
         : _configuration!.bottomPadding;
 
-    return SizedBox(
-      height: double.infinity,
-      width: double.infinity,
+    return SizedBox.expand(
       child: Padding(
         padding: EdgeInsets.only(
           bottom: bottomPadding,
